@@ -69,7 +69,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: build-${{ matrix.target }}-${{steps.properties.outputs.version}}
-          path: target/${{ matrix.target }}/release/main
+          path: target/${{ matrix.target }}/release/main${{ endsWith(matrix.target, 'x86_64-pc-windows-msvc') && '.exe' || '' }}
 
   # draft-release:
   #   name: Release Draft
