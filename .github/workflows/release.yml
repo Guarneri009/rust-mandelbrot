@@ -1,10 +1,14 @@
 name: Build
 on:
+  workflow_dispatch:
   # Trigger the workflow on pushes to only the 'main' branch (this avoids duplicate checks being run e.g. for dependabot pull requests)
   push:
     branches: [master, main]
   # Trigger the workflow on any pull request
-  pull_request:
+  #pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
 
 jobs:
   build:
@@ -65,6 +69,11 @@ jobs:
 
       - name: Package for macOS
         if: matrix.target == 'x86_64-apple-darwin'
+        run: |
+          zip --junk-paths rc-$｛｛ matrix.target ｝｝ target/$｛｛ matrix.target ｝｝/release/rc
+
+      - name: Package for macOS
+        if: matrix.target == 'aarch64-apple-darwin'
         run: |
           zip --junk-paths rc-$｛｛ matrix.target ｝｝ target/$｛｛ matrix.target ｝｝/release/rc
 
