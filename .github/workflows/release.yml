@@ -51,11 +51,17 @@ jobs:
           target: ${{ matrix.target }}
           override: true
 
+      # - name: Build
+      #   uses: actions-rs/cargo@v1
+      #   with:
+      #     command: build
+      #     args: --release --target=$｛｛ matrix.target ｝｝
+
       - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --target=$｛｛ matrix.target ｝｝
+        uses: Swatinem/rust-cache@v1
+
+      - name: Build release version
+        run: cargo build --verbose --release --target=${{ matrix.target }}
 
       - name: Package for linux-musl
         if: matrix.target == 'x86_64-unknown-linux-musl'
@@ -83,7 +89,6 @@ jobs:
           path: rc-$｛｛ matrix.target ｝｝.zip
 
       # - uses: Swatinem/rust-cache@v1
-
       # - name: Build release version
       #   run: cargo build --verbose --release --target=${{ matrix.target }}
 
