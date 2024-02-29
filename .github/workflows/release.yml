@@ -26,30 +26,70 @@ jobs:
             os: windows-latest
 
     runs-on: ${{ matrix.os }}
+
     outputs:
       version: ${{ steps.properties.outputs.version }}
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions-rs/toolchain@v1
+      - name: Setup code
+        uses: actions/checkout@v4
+
+      - name: Install musl tools
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: |
+          sudo apt install -qq -y musl-tools --no-install-recommends
+
+      - name: Setup Rust toolchain
+        uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           profile: minimal
           target: ${{ matrix.target }}
           override: true
-      - uses: Swatinem/rust-cache@v1
-      - name: Build release version
-        run: cargo build --verbose --release --target=${{ matrix.target }}
-      - name: Export properties
-        id: properties
-        shell: bash
-        run: |
-          VERSION="$(cargo run --bin version)"
-          echo "::set-output name=version::$VERSION"
-      - name: Upload artifact
-        uses: actions/upload-artifact@v2
+
+      - name: Build
+        uses: actions-rs/cargo@v1
         with:
-          name: build-${{ matrix.target }}-${{steps.properties.outputs.version}}
-          path: target/${{ matrix.target }}/release/main
+          command: build
+          args: --release --target=$｛｛ matrix.target ｝｝
+
+      - name: Package for linux-musl
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: |
+          zip --junk-paths rc-$｛｛ matrix.target ｝｝ target/$｛｛ matrix.target ｝｝/release/rc
+
+      - name: Package for windows
+        if: matrix.target == 'x86_64-pc-windows-msvc'
+        run: |
+          powershell Compress-Archive -Path target/$｛｛ matrix.target ｝｝/release/rc.exe -DestinationPath rc-$｛｛ matrix.target ｝｝.zip
+
+      - name: Package for macOS
+        if: matrix.target == 'x86_64-apple-darwin'
+        run: |
+          zip --junk-paths rc-$｛｛ matrix.target ｝｝ target/$｛｛ matrix.target ｝｝/release/rc
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: build-$｛｛ matrix.target ｝｝
+          path: rc-$｛｛ matrix.target ｝｝.zip
+
+      # - uses: Swatinem/rust-cache@v1
+
+      # - name: Build release version
+      #   run: cargo build --verbose --release --target=${{ matrix.target }}
+
+      # - name: Export properties
+      #   id: properties
+      #   shell: bash
+      #   run: |
+      #     VERSION="$(cargo run --bin version)"
+      #     echo "::set-output name=version::$VERSION"
+
+      # - name: Upload artifact
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: build-${{ matrix.target }}-${{steps.properties.outputs.version}}
+      #     path: target/${{ matrix.target }}/release/main
 
   # draft-release:
   #   name: Release Draft
